@@ -1,11 +1,18 @@
+/** Default forum post title for the bot-owned index thread. */
+export const DEFAULT_INDEX_THREAD_TITLE = 'Index des events';
+
+export type ForumConfig = {
+	channelId: string;
+	/** If set, use this thread when valid; otherwise find/create by indexThreadTitle. */
+	indexThreadId: string | null;
+	indexThreadTitle: string;
+	debounceMs: number;
+	pastEventGraceDays: number;
+};
+
 export type AppConfig = {
 	token: string;
-	forum: {
-		channelId: string;
-		indexThreadId: string;
-		debounceMs: number;
-		pastEventGraceDays: number;
-	} | null;
+	forum: ForumConfig | null;
 };
 
 function readPositiveInt(envKey: string, defaultValue: number): number {
@@ -23,13 +30,16 @@ export function loadConfig(): AppConfig {
 	}
 
 	const forumChannelId = process.env.FORUM_CHANNEL_ID?.trim();
-	const indexThreadId = process.env.INDEX_THREAD_ID?.trim();
+	const indexThreadId = process.env.INDEX_THREAD_ID?.trim() || null;
+	const indexThreadTitle =
+		process.env.INDEX_THREAD_TITLE?.trim() || DEFAULT_INDEX_THREAD_TITLE;
 
-	let forum: AppConfig['forum'] = null;
-	if (forumChannelId && indexThreadId) {
+	let forum: ForumConfig | null = null;
+	if (forumChannelId) {
 		forum = {
 			channelId: forumChannelId,
 			indexThreadId,
+			indexThreadTitle,
 			debounceMs: readPositiveInt('INDEX_DEBOUNCE_MS', 5000),
 			pastEventGraceDays: readPositiveInt('PAST_EVENT_GRACE_DAYS', 7),
 		};

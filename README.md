@@ -6,22 +6,24 @@ Discord bot for RD72 (TypeScript, discord.js v14). Maintains a pinned **forum in
 
 ```bash
 cp .env.example .env
-# TOKEN, FORUM_CHANNEL_ID, INDEX_THREAD_ID
+# TOKEN, FORUM_CHANNEL_ID
 npm ci
 npm run build
 npm start
 npm test
 ```
 
-Developer Portal: enable the bot; **Guilds** intent is enough for thread events. Permissions on the forum: View Channel, Read Message History, Send Messages in Threads, Manage Threads (edit the index starter). Message Content Intent is not required for this feature.
+Developer Portal: enable the bot; **Guilds** intent is enough for thread events. Message Content Intent is not required.
 
-## Forum index (manual setup)
+**Forum channel permissions (bot role):** View Channel, Read Message History, **Create Public Threads**, Send Messages in Threads, **Manage Threads** (pin the index). The bot **creates** the index post so it can edit the starter without Manage Messages on others’ posts.
 
-1. In your events forum, create a post (e.g. title `Index des events`) and **pin** it.
-2. Copy the **thread ID** (Developer Mode) → `INDEX_THREAD_ID`.
-3. Set `FORUM_CHANNEL_ID` (sandbox test forum: `1258321779265376266`).
-4. Restart the bot; the starter message is replaced with the sorted list.
-5. Event threads must match `jour mois année` French titles; optional ` - ville`. Events more than **7 days** in the past are hidden (`PAST_EVENT_GRACE_DAYS`).
+## Forum index
+
+1. Set `FORUM_CHANNEL_ID` (sandbox: `1258321779265376266`).
+2. Restart the bot — it **finds or creates** a forum post titled **`Index des events`** (override with `INDEX_THREAD_TITLE`), pins it, and maintains the starter message.
+3. Optional: set `INDEX_THREAD_ID` if you want a specific thread (must be bot-owned starter, or env is ignored).
+4. Event threads: titles like `12 novembre 2026 - Toulouse`. Events more than **7 days** in the past are hidden (`PAST_EVENT_GRACE_DAYS`).
+5. You can delete your old hand-made index post; the bot owns the new one.
 
 ## Deploy on VPS (PM2 + Git push)
 

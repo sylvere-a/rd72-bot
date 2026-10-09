@@ -2,13 +2,14 @@ import dotenv from 'dotenv';
 import path from 'node:path';
 import {
 	Client,
+	DiscordAPIError,
 	Events,
 	GatewayIntentBits,
 	type ThreadChannel,
 } from 'discord.js';
 import { loadConfig } from './config';
 import { debounce } from './debounce';
-import { refreshForumIndex } from './forumIndex';
+import { refreshForumIndex, type ForumRuntime } from './forumIndex';
 
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
@@ -24,12 +25,16 @@ const client = new Client({
 	intents: [GatewayIntentBits.Guilds],
 });
 
+const forumRuntime: ForumRuntime = { indexThreadId: '' };
+
 function isTrackedForumThread(thread: ThreadChannel): boolean {
 	if (!config.forum) return false;
-	return (
-		thread.parentId === config.forum.channelId &&
-		thread.id !== config.forum.indexThreadId
-	);
+	if (thread.parentId !== config.forum.channelId) return false;
+	if (forumRuntime.indexThreadId && thread.id === forumRuntime.indexThreadId) {
+		return false;
+	}
+	if (thread.name === config.forum.indexThreadTitle) return false;
+	return true;
 }
 
 let scheduleIndexRefresh: (() => void) | undefined;
@@ -37,15 +42,19 @@ let scheduleIndexRefresh: (() => void) | undefined;
 if (config.forum) {
 	const forumConfig = config.forum;
 	const runRefresh = () => {
-		refreshForumIndex(client, forumConfig).catch((err) => {
+		refreshForumIndex(client, forumConfig, forumRuntime).catch((err) => {
+			if (err instanceof DiscordAPIError) {
+				console.error(
+					`Forum index refresh failed: [${err.code}] ${err.message}`,
+				);
+				return;
+			}
 			console.error('Forum index refresh failed:', err);
 		});
 	};
 	scheduleIndexRefresh = debounce(runRefresh, forumConfig.debounceMs);
 } else {
-	console.warn(
-		'Forum index disabled: set FORUM_CHANNEL_ID and INDEX_THREAD_ID in .env',
-	);
+	console.warn('Forum index disabled: set FORUM_CHANNEL_ID in .env');
 }
 
 client.once(Events.ClientReady, (readyClient) => {
@@ -66,7 +75,9 @@ client.on(Events.ThreadUpdate, (oldThread, newThread) => {
 
 client.on(Events.ThreadDelete, (thread) => {
 	if (!config.forum) return;
-	if (thread.id === config.forum.indexThreadId) return;
+	if (forumRuntime.indexThreadId && thread.id === forumRuntime.indexThreadId) {
+		forumRuntime.indexThreadId = '';
+	}
 	if (thread.parentId && thread.parentId !== config.forum.channelId) return;
 	scheduleIndexRefresh?.();
 });
