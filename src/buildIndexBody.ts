@@ -30,8 +30,9 @@ export function buildIndexBody(guildId: string, entries: IndexEntry[]): string {
 
 	const lineFor = (entry: IndexEntry) => {
 		const url = `https://discord.com/channels/${guildId}/${entry.threadId}`;
-		const prefix = entry.isHome ? ':house:' : ':small_orange_diamond:';
-		return `${prefix} [${entry.title}](${url})`;
+		const prefix = entry.isHome ? ':house: **' : ':minibus: ';
+		const suffix = entry.isHome ? '**' : '';
+		return `${prefix}[${entry.title}](${url})${suffix}`;
 	};
 
 	const allLines = sorted.map(lineFor);
