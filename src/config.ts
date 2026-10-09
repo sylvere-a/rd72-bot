@@ -1,5 +1,5 @@
 /** Default forum post title for the bot-owned index thread. */
-export const DEFAULT_INDEX_THREAD_TITLE = 'Index des events';
+export const DEFAULT_INDEX_THREAD_TITLE = ':calendar: Liste des évènements';
 
 export type ForumConfig = {
 	channelId: string;
