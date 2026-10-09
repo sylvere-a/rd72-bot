@@ -6,6 +6,8 @@ export type ForumConfig = {
 	/** If set, use this thread when valid; otherwise find/create by indexThreadTitle. */
 	indexThreadId: string | null;
 	indexThreadTitle: string;
+	/** Forum tag id: events with this tag show :house: in the index, others :earth_africa: */
+	homeTagId: string | null;
 	debounceMs: number;
 	pastEventGraceDays: number;
 };
@@ -33,6 +35,7 @@ export function loadConfig(): AppConfig {
 	const indexThreadId = process.env.INDEX_THREAD_ID?.trim() || null;
 	const indexThreadTitle =
 		process.env.INDEX_THREAD_TITLE?.trim() || DEFAULT_INDEX_THREAD_TITLE;
+	const homeTagId = process.env.HOME_TAG_ID?.trim() || null;
 
 	let forum: ForumConfig | null = null;
 	if (forumChannelId) {
@@ -40,6 +43,7 @@ export function loadConfig(): AppConfig {
 			channelId: forumChannelId,
 			indexThreadId,
 			indexThreadTitle,
+			homeTagId,
 			debounceMs: readPositiveInt('INDEX_DEBOUNCE_MS', 5000),
 			pastEventGraceDays: readPositiveInt('PAST_EVENT_GRACE_DAYS', 7),
 		};

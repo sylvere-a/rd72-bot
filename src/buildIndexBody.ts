@@ -13,6 +13,7 @@ export type IndexEntry = {
 	threadId: string;
 	title: string;
 	eventDate: dayjs.Dayjs;
+	isHome: boolean;
 };
 
 export function buildIndexBody(guildId: string, entries: IndexEntry[]): string {
@@ -21,7 +22,7 @@ export function buildIndexBody(guildId: string, entries: IndexEntry[]): string {
 	);
 
 	const updated = dayjs().tz(PARIS).locale('fr').format('D MMMM YYYY [à] HH:mm');
-	const header = `**Calendrier des events**\n_Mis à jour le ${updated}_\n`;
+	const header = `_Mis à jour le ${updated}_\n\n`;
 
 	if (sorted.length === 0) {
 		return `${header}\n_Aucun event à afficher._`;
@@ -29,25 +30,16 @@ export function buildIndexBody(guildId: string, entries: IndexEntry[]): string {
 
 	const lineFor = (entry: IndexEntry) => {
 		const url = `https://discord.com/channels/${guildId}/${entry.threadId}`;
-		return `• [${entry.title}](${url})`;
+		const prefix = entry.isHome ? ':house:' : ':small_orange_diamond:';
+		return `${prefix} [${entry.title}](${url})`;
 	};
 
 	const allLines = sorted.map(lineFor);
-	let omitted = 0;
-
-	const footerFor = (shown: number, hidden: number) => {
-		const countLine = `\n_${shown} event(s) listé(s)._`;
-		const hiddenLine =
-			hidden > 0 ? `\n_… et ${hidden} autre(s)._` : '';
-		return countLine + hiddenLine;
-	};
 
 	while (allLines.length > 0) {
-		const hidden = omitted;
-		const body = header + allLines.join('\n') + footerFor(allLines.length, hidden);
+		const body = header + allLines.join('\n');
 		if (body.length <= DISCORD_MESSAGE_LIMIT) return body;
 		allLines.pop();
-		omitted += 1;
 	}
 
 	return `${header}\n_Trop d'events pour un seul message._`;
