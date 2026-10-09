@@ -69,7 +69,10 @@ client.on(Events.ThreadCreate, (thread) => {
 
 client.on(Events.ThreadUpdate, (oldThread, newThread) => {
 	if (!newThread.isThread() || !isTrackedForumThread(newThread)) return;
-	if (oldThread.name === newThread.name) return;
+	const tagsUnchanged =
+		oldThread.appliedTags.length === newThread.appliedTags.length &&
+		oldThread.appliedTags.every((id) => newThread.appliedTags.includes(id));
+	if (oldThread.name === newThread.name && tagsUnchanged) return;
 	scheduleIndexRefresh?.();
 });
 

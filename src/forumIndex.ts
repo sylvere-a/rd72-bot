@@ -126,10 +126,15 @@ export async function refreshForumIndex(
 			continue;
 		}
 
+		const isHome =
+			forumConfig.homeTagId !== null &&
+			thread.appliedTags.includes(forumConfig.homeTagId);
+
 		entries.push({
 			threadId: thread.id,
 			title: thread.name,
 			eventDate,
+			isHome,
 		});
 	}
 
