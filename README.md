@@ -22,7 +22,7 @@ Developer Portal: enable the bot; **Guilds** intent is enough for thread events.
 1. Set `FORUM_CHANNEL_ID` (sandbox: `1258321779265376266`).
 2. Restart the bot — it **finds or creates** a forum post titled **`Index des events`** (override with `INDEX_THREAD_TITLE`), pins it, and maintains the starter message.
 3. Optional: set `INDEX_THREAD_ID` if you want a specific thread (must be bot-owned starter, or env is ignored).
-4. Event threads: date is taken from **before the first ` - `** (e.g. `🏠 15 & 16 mai 2027 - CHAMP … - LE MANS` sorts on 15 mai 2027). Classic `12 novembre 2026 - Toulouse` still works. Events more than **7 days** in the past are hidden (`PAST_EVENT_GRACE_DAYS`).
+4. Event threads: date is **before the first ` - `**. Multi-day titles use the **first day** for sorting (`15 & 16 mai`, `21-22 novembre`, `21/22`, `21, 22`, `31 octobre & 1 novembre`, optional leading emoji). Events more than **7 days** in the past are hidden (`PAST_EVENT_GRACE_DAYS`).
 5. Set `HOME_TAG_ID` to your forum tag snowflake: index lines start with `:house:` for tagged “home” events, `:earth_africa:` otherwise.
 5. You can delete your old hand-made index post; the bot owns the new one.
 

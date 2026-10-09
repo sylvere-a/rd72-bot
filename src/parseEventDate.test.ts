@@ -32,8 +32,21 @@ describe('datePartFromThreadTitle', () => {
 });
 
 describe('normalizeDatePart', () => {
-	it('removes emoji and multi-day ampersand', () => {
+	it('removes emoji and multi-day ampersand same month', () => {
 		assert.equal(normalizeDatePart('🏠 15 & 16 mai 2027'), '15 mai 2027');
+	});
+
+	it('cross-month ampersand keeps first day', () => {
+		assert.equal(
+			normalizeDatePart('31 octobre & 1 novembre 2026'),
+			'31 octobre 2026',
+		);
+	});
+
+	it('collapses day ranges', () => {
+		assert.equal(normalizeDatePart('21-22 novembre 2026'), '21 novembre 2026');
+		assert.equal(normalizeDatePart('21/22 novembre 2026'), '21 novembre 2026');
+		assert.equal(normalizeDatePart('21, 22 novembre 2026'), '21 novembre 2026');
 	});
 });
 
@@ -58,6 +71,28 @@ describe('parseEventDateFromTitle', () => {
 	it('rejects invalid title', () => {
 		assert.equal(parseEventDateFromTitle('Toulouse soon'), null);
 	});
+
+	it('parses cross-month ampersand title', () => {
+		const d = parseEventDateFromTitle('31 octobre & 1 novembre 2026 - NANTES');
+		assert.ok(d);
+		assert.equal(d!.date(), 31);
+		assert.equal(d!.month(), 9);
+		assert.equal(d!.year(), 2026);
+	});
+
+	for (const title of [
+		'21-22 novembre 2026 - BREST',
+		'21/22 novembre 2026 - BREST',
+		'21, 22 novembre 2026 - BREST',
+	]) {
+		it(`parses day range: ${title}`, () => {
+			const d = parseEventDateFromTitle(title);
+			assert.ok(d);
+			assert.equal(d!.date(), 21);
+			assert.equal(d!.month(), 10);
+			assert.equal(d!.year(), 2026);
+		});
+	}
 });
 
 describe('eventStillListed', () => {

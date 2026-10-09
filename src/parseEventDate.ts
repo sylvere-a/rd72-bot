@@ -10,10 +10,10 @@ dayjs.extend(timezone);
 
 const PARIS = 'Europe/Paris';
 const TITLE_FORMAT = 'D MMMM YYYY';
+const MONTH_CHARS = 'a-zA-Zàâäéèêëïîôùûüç';
 
 /**
  * Text before the first " - " (event label / venue may follow).
- * Example: "🏠 15 & 16 mai 2027 - CHAMP … - LE MANS" → "🏠 15 & 16 mai 2027"
  */
 export function datePartFromThreadTitle(title: string): string {
 	const idx = title.indexOf(' - ');
@@ -21,12 +21,39 @@ export function datePartFromThreadTitle(title: string): string {
 	return title.slice(0, idx).trim();
 }
 
-/** Strip leading emoji/junk; collapse "15 & 16 mai 2027" to "15 mai 2027" for sorting. */
+/**
+ * Reduce multi-day / noisy prefixes to "D MMMM YYYY" for sorting (first day wins).
+ */
 export function normalizeDatePart(raw: string): string {
 	let s = raw.replace(/\s+/g, ' ').trim();
 	s = s.replace(/^[^\d]*/, '');
-	s = s.replace(/^(\d{1,2})\s*&\s*\d{1,2}(\s+)/, '$1$2');
-	return s.trim();
+
+	const yearMatch = s.match(/(20\d{2})\s*$/);
+	const year = yearMatch?.[1] ?? null;
+	let body = year ? s.replace(/\s*20\d{2}\s*$/, '').trim() : s;
+
+	// 21-22 / 21/22 / 21, 22 novembre …
+	body = body.replace(
+		new RegExp(`^(\\d{1,2})\\s*[-/,]\\s*\\d{1,2}(\\s+(?:[${MONTH_CHARS}]))`),
+		'$1$2',
+	);
+
+	// 15 & 16 mai (same month)
+	const sameMonth = body.match(
+		new RegExp(`^(\\d{1,2})\\s*&\\s*\\d{1,2}\\s+([${MONTH_CHARS}][${MONTH_CHARS}\\s]*)$`),
+	);
+	if (sameMonth) {
+		body = `${sameMonth[1]} ${sameMonth[2].trim()}`;
+	} else if (body.includes('&')) {
+		// 31 octobre & 1 novembre → 31 octobre (+ year)
+		body = body.split('&')[0].trim();
+	}
+
+	body = body.replace(/\s+/g, ' ').trim();
+	if (year && !/20\d{2}/.test(body)) {
+		body = `${body} ${year}`;
+	}
+	return body;
 }
 
 function tryParseDatePart(part: string): dayjs.Dayjs | null {
