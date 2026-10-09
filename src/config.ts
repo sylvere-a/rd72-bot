@@ -1,14 +1,10 @@
 /** Default forum post title for the bot-owned index thread. */
 export const DEFAULT_INDEX_THREAD_TITLE = 'Liste des évènements';
-/** Default forum post icon (reaction on starter message) — see forumThreadEmoji.ts */
-export const DEFAULT_INDEX_THREAD_EMOJI = '📅';
 
 export type ForumConfig = {
 	channelId: string;
 	indexThreadId: string | null;
 	indexThreadTitle: string;
-	/** Post list icon via starter reaction: Unicode, <:name:id>, snowflake, or :calendar: */
-	indexThreadEmoji: string | null;
 	homeTagId: string | null;
 	debounceMs: number;
 	pastEventGraceDays: number;
@@ -37,13 +33,6 @@ export function loadConfig(): AppConfig {
 	const indexThreadId = process.env.INDEX_THREAD_ID?.trim() || null;
 	const indexThreadTitle =
 		process.env.INDEX_THREAD_TITLE?.trim() || DEFAULT_INDEX_THREAD_TITLE;
-	const indexThreadEmoji = ((): string | null => {
-		if (process.env.INDEX_THREAD_EMOJI === undefined) {
-			return DEFAULT_INDEX_THREAD_EMOJI;
-		}
-		const trimmed = process.env.INDEX_THREAD_EMOJI.trim();
-		return trimmed === '' ? null : trimmed;
-	})();
 	const homeTagId = process.env.HOME_TAG_ID?.trim() || null;
 
 	let forum: ForumConfig | null = null;
@@ -52,7 +41,6 @@ export function loadConfig(): AppConfig {
 			channelId: forumChannelId,
 			indexThreadId,
 			indexThreadTitle,
-			indexThreadEmoji,
 			homeTagId,
 			debounceMs: readPositiveInt('INDEX_DEBOUNCE_MS', 5000),
 			pastEventGraceDays: readPositiveInt('PAST_EVENT_GRACE_DAYS', 7),

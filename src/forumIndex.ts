@@ -8,7 +8,6 @@ import {
 import type { ForumConfig } from './config';
 import { buildIndexBody, type IndexEntry } from './buildIndexBody';
 import { eventStillListed } from './eventInWindow';
-import { syncForumPostReaction } from './forumThreadEmoji';
 import { parseEventDateFromTitle } from './parseEventDate';
 
 export type ForumRuntime = {
@@ -43,19 +42,12 @@ async function findBotIndexThread(
 async function createForumIndexThread(
 	forum: ForumChannel,
 	forumConfig: ForumConfig,
-	botId: string,
 ): Promise<ThreadChannel> {
-	const created = await forum.threads.create({
+	return forum.threads.create({
 		name: forumConfig.indexThreadTitle,
 		message: { content: '_Initialisation de l’index…_' },
 		reason: 'RD72 bot events index',
 	});
-	await syncForumPostReaction(
-		created,
-		botId,
-		forumConfig.indexThreadEmoji,
-	);
-	return created;
 }
 
 async function resolveIndexThread(
@@ -72,11 +64,6 @@ async function resolveIndexThread(
 		const existing = await client.channels.fetch(forumConfig.indexThreadId);
 		if (existing?.isThread()) {
 			if (await starterIsFromBot(existing, botId)) {
-				await syncForumPostReaction(
-					existing,
-					botId,
-					forumConfig.indexThreadEmoji,
-				);
 				return existing;
 			}
 			console.warn(
@@ -95,23 +82,12 @@ async function resolveIndexThread(
 		forumConfig.indexThreadTitle,
 		botId,
 	);
-	if (found) {
-		await syncForumPostReaction(
-			found,
-			botId,
-			forumConfig.indexThreadEmoji,
-		);
-		return found;
-	}
+	if (found) return found;
 
 	console.log(
 		`Creating forum index thread "${forumConfig.indexThreadTitle}" …`,
 	);
-	const created = await createForumIndexThread(
-		forum,
-		forumConfig,
-		botId,
-	);
+	const created = await createForumIndexThread(forum, forumConfig);
 
 	await created.pin('RD72 bot events index');
 	console.log(
