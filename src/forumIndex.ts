@@ -109,14 +109,20 @@ export async function refreshForumIndex(
 
 	const threads = await fetchAllActiveThreads(forum);
 	const entries: IndexEntry[] = [];
+	let skippedUnparsed = 0;
+	let skippedPast = 0;
 
 	for (const thread of threads) {
 		if (thread.id === runtime.indexThreadId) continue;
 		if (thread.name === forumConfig.indexThreadTitle) continue;
 
 		const eventDate = parseEventDateFromTitle(thread.name);
-		if (!eventDate) continue;
+		if (!eventDate) {
+			skippedUnparsed += 1;
+			continue;
+		}
 		if (!eventStillListed(eventDate, forumConfig.pastEventGraceDays)) {
+			skippedPast += 1;
 			continue;
 		}
 
@@ -125,6 +131,21 @@ export async function refreshForumIndex(
 			title: thread.name,
 			eventDate,
 		});
+	}
+
+	if (entries.length === 0 && threads.length > 1) {
+		const sample = threads
+			.filter(
+				(t) =>
+					t.id !== runtime.indexThreadId &&
+					t.name !== forumConfig.indexThreadTitle,
+			)
+			.slice(0, 5)
+			.map((t) => `"${t.name}"`)
+			.join(', ');
+		console.log(
+			`Forum index: 0 events listed (${threads.length} active threads; unparsed: ${skippedUnparsed}, outside ${forumConfig.pastEventGraceDays}d window: ${skippedPast}). Titles: ${sample || 'none'}`,
+		);
 	}
 
 	const guildId = forum.guildId;

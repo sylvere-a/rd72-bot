@@ -10,7 +10,7 @@ const PARIS = 'Europe/Paris';
 export function eventStillListed(
 	eventDate: dayjs.Dayjs,
 	pastEventGraceDays: number,
-	now: dayjs.Dayjs = dayjs.tz(PARIS),
+	now: dayjs.Dayjs = dayjs().tz(PARIS),
 ): boolean {
 	const today = now.startOf('day');
 	const cutoff = today.subtract(pastEventGraceDays, 'day');

@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import 'dayjs/locale/fr';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -19,7 +20,7 @@ export function buildIndexBody(guildId: string, entries: IndexEntry[]): string {
 		(a, b) => a.eventDate.valueOf() - b.eventDate.valueOf(),
 	);
 
-	const updated = dayjs.tz(PARIS).format('D MMMM YYYY [à] HH:mm');
+	const updated = dayjs().tz(PARIS).locale('fr').format('D MMMM YYYY [à] HH:mm');
 	const header = `**Calendrier des events**\n_Mis à jour le ${updated}_\n`;
 
 	if (sorted.length === 0) {

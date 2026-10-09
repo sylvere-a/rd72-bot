@@ -18,10 +18,19 @@ export function datePartFromThreadTitle(title: string): string {
 	return title.slice(0, idx).trim();
 }
 
+function tryParseDatePart(part: string): dayjs.Dayjs | null {
+	const normalized = part.replace(/\s+/g, ' ').trim();
+	const attempts = [normalized, normalized.toLowerCase()];
+	for (const candidate of attempts) {
+		const parsed = dayjs(candidate, TITLE_FORMAT, 'fr', true);
+		if (parsed.isValid()) return parsed;
+	}
+	return null;
+}
+
 /** Parsed event day in Europe/Paris, start of day; null if title does not match. */
 export function parseEventDateFromTitle(title: string): dayjs.Dayjs | null {
-	const part = datePartFromThreadTitle(title);
-	const parsed = dayjs(part, TITLE_FORMAT, 'fr', true);
-	if (!parsed.isValid()) return null;
-	return parsed.tz(PARIS).startOf('day');
+	const parsed = tryParseDatePart(datePartFromThreadTitle(title));
+	if (!parsed) return null;
+	return dayjs.tz(parsed.format('YYYY-MM-DD'), PARIS).startOf('day');
 }
