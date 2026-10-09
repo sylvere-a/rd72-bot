@@ -1,80 +1,50 @@
 # RD72 Bot
 
-Discord bot for RD72 (discord.js v14).
+Discord bot for RD72 (TypeScript, discord.js v14). Maintains a pinned **forum index** post listing upcoming/recent events parsed from thread titles (`12 novembre 2026 - Toulouse`).
 
 ## Local setup
 
 ```bash
 cp .env.example .env
-# Set TOKEN from the Discord Developer Portal (Bot tab)
-npm install
+# TOKEN, FORUM_CHANNEL_ID, INDEX_THREAD_ID
+npm ci
+npm run build
 npm start
+npm test
 ```
 
-In the [Developer Portal](https://discord.com/developers/applications), enable the bot and invite it with the permissions your features need. For forum/thread work, **Message Content Intent** is only required if you add prefix or plain-text features.
+Developer Portal: enable the bot; **Guilds** intent is enough for thread events. Permissions on the forum: View Channel, Read Message History, Send Messages in Threads, Manage Threads (edit the index starter). Message Content Intent is not required for this feature.
 
----
+## Forum index (manual setup)
 
-## Deploy on Render
-
-Use a **Background Worker**, not a Web Service (free web services sleep; the bot needs a always-on process).
-
-| Setting           | Value                      |
-| ----------------- | -------------------------- |
-| **Service type**  | Background Worker          |
-| **Runtime**       | Node                       |
-| **Build command** | `npm ci`                   |
-| **Start command** | `npm start`                |
-| **Plan**          | Starter (~$7/mo) is enough |
-
-1. Connect the GitHub repo and deploy branch **`master`**.
-2. Add environment variable **`TOKEN`** (secret) in the Render dashboard.
-3. After deploy, open **Logs** and confirm `Ready as …`.
-
-Render redeploys automatically on each push to the linked branch. Changing `TOKEN` or other env vars triggers a restart of the same service (one worker, no second deploy needed for test vs prod — use env and channel IDs).
-
----
+1. In your events forum, create a post (e.g. title `Index des events`) and **pin** it.
+2. Copy the **thread ID** (Developer Mode) → `INDEX_THREAD_ID`.
+3. Set `FORUM_CHANNEL_ID` (sandbox test forum: `1258321779265376266`).
+4. Restart the bot; the starter message is replaced with the sorted list.
+5. Event threads must match `jour mois année` French titles; optional ` - ville`. Events more than **7 days** in the past are hidden (`PAST_EVENT_GRACE_DAYS`).
 
 ## Deploy on VPS (PM2 + Git push)
 
-Paths used below:
+| Path | Role |
+|------|------|
+| `/var/www/rd72-bot` | Live app (checkout, `node_modules`, `.env`, built `dist/`) |
+| `~/rd72-bot.git` | Bare repo (receives pushes) |
 
-| Path                | Role                                         |
-| ------------------- | -------------------------------------------- |
-| `/var/www/rd72-bot` | Live app (checkout, `node_modules`, `.env`)  |
-| `~/rd72-bot.git`    | Bare repository on the VPS (receives pushes) |
+### PM2 (Node 22 for this bot only)
 
-Adjust usernames/paths if your server layout differs.
-
-### One-time: prepare the VPS
+Use an explicit Node 22 interpreter so other bots can stay on Node 18:
 
 ```bash
-# App directory
-sudo mkdir -p /var/www/rd72-bot
-sudo chown "$USER":"$USER" /var/www/rd72-bot
-
-# Bare repo for deploy pushes
-git init --bare ~/rd72-bot.git
-
-# First deploy: clone into the app directory (or leave empty and let the hook populate it)
-git clone ~/rd72-bot.git /var/www/rd72-bot
-cd /var/www/rd72-bot
-git checkout master
-cp .env.example .env
-nano .env   # set TOKEN
-npm ci
-
-# PM2
-pm2 start /var/www/rd72-bot/index.js --name RD72_Bot
+pm2 start /var/www/rd72-bot/dist/index.js --name RD72_Bot \
+  --interpreter "$HOME/.nvm/versions/node/v22.17.1/bin/node"
 pm2 save
-pm2 startup   # run the command it prints so the bot survives reboots
 ```
 
-### One-time: `post-receive` hook (auto checkout + restart on `master`)
+After code changes locally: `npm run build` before restart if testing on the server manually.
 
-```bash
-nano ~/rd72-bot.git/hooks/post-receive
-```
+### `post-receive` hook
+
+After checkout, **build TypeScript** then restart PM2:
 
 ```bash
 #!/bin/bash
@@ -84,14 +54,17 @@ TARGET="/var/www/rd72-bot"
 GIT_DIR="$HOME/rd72-bot.git"
 BRANCH="master"
 PM2_NAME="RD72_Bot"
+NODE22="$HOME/.nvm/versions/node/v22.17.1/bin/node"
+NPM22="$HOME/.nvm/versions/node/v22.17.1/bin/npm"
 
 while read -r oldrev newrev ref; do
 	if [ "$ref" = "refs/heads/$BRANCH" ]; then
 		echo "Deploying $BRANCH to $TARGET ..."
 		git --work-tree="$TARGET" --git-dir="$GIT_DIR" checkout -f "$BRANCH"
 		cd "$TARGET"
-		npm ci
-		pm2 restart "$PM2_NAME" || pm2 start index.js --name "$PM2_NAME"
+		"$NPM22" ci
+		"$NPM22" run build
+		pm2 restart "$PM2_NAME" || pm2 start dist/index.js --name "$PM2_NAME" --interpreter "$NODE22"
 		pm2 save
 		echo "Done."
 	else
@@ -100,40 +73,21 @@ while read -r oldrev newrev ref; do
 done
 ```
 
+Keep **`.env` only on the server** (not in git).
+
+### Deploy from your machine
+
 ```bash
-chmod +x ~/rd72-bot.git/hooks/post-receive
+git push origin master
+git push production master
 ```
 
-The hook checks out **`master`** into `/var/www/rd72-bot`, runs **`npm ci`**, then **`pm2 restart RD72_Bot`** (or starts it if missing).
-
-**Keep `.env` only on the server** — it is not in git. The hook does not overwrite it.
-
-### One-time: add the VPS remote on your machine
-
-From your local clone (same repo):
+### PM2 useful commands
 
 ```bash
-git remote add production USER@YOUR_VPS_IP:rd72-bot.git
-```
-
-Use the SSH user and host you use to log in (e.g. `ubuntu@203.0.113.10:rd72-bot.git` if the bare repo is `~/rd72-bot.git` on that account).
-
-### Day-to-day deploy
-
-```bash
-git push origin master      # GitHub (and Render, if connected)
-git push production master  # VPS → hook runs checkout + npm ci + pm2 restart
-```
-
-### Useful PM2 commands
-
-```bash
-pm2 list
 pm2 logs RD72_Bot
 pm2 restart RD72_Bot
 ```
-
----
 
 ## Invite URL
 
