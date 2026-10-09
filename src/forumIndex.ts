@@ -5,7 +5,7 @@ import {
 	type ForumChannel,
 	type ThreadChannel,
 } from 'discord.js';
-import type { ForumConfig } from './config';
+import { indexThreadDisplayName, type ForumConfig } from './config';
 import { buildIndexBody, type IndexEntry } from './buildIndexBody';
 import { eventStillListed } from './eventInWindow';
 import { parseEventDateFromTitle } from './parseEventDate';
@@ -66,18 +66,17 @@ async function resolveIndexThread(
 	}
 
 	const active = await fetchAllActiveThreads(forum);
+	const indexName = indexThreadDisplayName(forumConfig);
 	const found = await findBotIndexThread(
 		active as ThreadChannel[],
-		forumConfig.indexThreadTitle,
+		indexName,
 		botId,
 	);
 	if (found) return found;
 
-	console.log(
-		`Creating forum index thread "${forumConfig.indexThreadTitle}" …`,
-	);
+	console.log(`Creating forum index thread "${indexName}" …`);
 	const created = await forum.threads.create({
-		name: forumConfig.indexThreadTitle,
+		name: indexName,
 		message: {
 			content: '_Initialisation de l’index…_',
 		},
@@ -114,7 +113,7 @@ export async function refreshForumIndex(
 
 	for (const thread of threads) {
 		if (thread.id === runtime.indexThreadId) continue;
-		if (thread.name === forumConfig.indexThreadTitle) continue;
+		if (thread.name === indexThreadDisplayName(forumConfig)) continue;
 
 		const eventDate = parseEventDateFromTitle(thread.name);
 		if (!eventDate) {
@@ -143,7 +142,7 @@ export async function refreshForumIndex(
 			.filter(
 				(t) =>
 					t.id !== runtime.indexThreadId &&
-					t.name !== forumConfig.indexThreadTitle,
+					t.name !== indexThreadDisplayName(forumConfig),
 			)
 			.slice(0, 5)
 			.map((t) => `"${t.name}"`)

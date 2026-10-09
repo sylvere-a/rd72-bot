@@ -7,7 +7,7 @@ import {
 	GatewayIntentBits,
 	type ThreadChannel,
 } from 'discord.js';
-import { loadConfig } from './config';
+import { indexThreadDisplayName, loadConfig } from './config';
 import { debounce } from './debounce';
 import { refreshForumIndex, type ForumRuntime } from './forumIndex';
 
@@ -33,7 +33,7 @@ function isTrackedForumThread(thread: ThreadChannel): boolean {
 	if (forumRuntime.indexThreadId && thread.id === forumRuntime.indexThreadId) {
 		return false;
 	}
-	if (thread.name === config.forum.indexThreadTitle) return false;
+	if (thread.name === indexThreadDisplayName(config.forum)) return false;
 	return true;
 }
 
