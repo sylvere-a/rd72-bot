@@ -1,15 +1,14 @@
-/** Default forum post title for the bot-owned index thread (without emoji prefix). */
+/** Default forum post title for the bot-owned index thread. */
 export const DEFAULT_INDEX_THREAD_TITLE = 'Liste des évènements';
-export const DEFAULT_INDEX_THREAD_EMOJI = ':calendar:';
+/** Default forum post icon (Unicode), not in the title — see forumThreadEmoji.ts */
+export const DEFAULT_INDEX_THREAD_EMOJI = '📅';
 
 export type ForumConfig = {
 	channelId: string;
-	/** If set, use this thread when valid; otherwise find/create by index thread name. */
 	indexThreadId: string | null;
 	indexThreadTitle: string;
-	/** Prepended to indexThreadTitle for the forum post name (e.g. :calendar: or 📅). */
+	/** Forum post icon: Unicode (📅), custom <:a:123>, snowflake, or :calendar: shortcode */
 	indexThreadEmoji: string | null;
-	/** Forum tag id: events with this tag show :house: in the index, others :earth_africa: */
 	homeTagId: string | null;
 	debounceMs: number;
 	pastEventGraceDays: number;
@@ -61,10 +60,4 @@ export function loadConfig(): AppConfig {
 	}
 
 	return { token, forum };
-}
-
-/** Full forum post title for the index thread (emoji + title). */
-export function indexThreadDisplayName(forum: ForumConfig): string {
-	if (!forum.indexThreadEmoji) return forum.indexThreadTitle;
-	return `${forum.indexThreadEmoji} ${forum.indexThreadTitle}`;
 }
