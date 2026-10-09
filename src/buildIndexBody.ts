@@ -30,7 +30,7 @@ export function buildIndexBody(guildId: string, entries: IndexEntry[]): string {
 
 	const lineFor = (entry: IndexEntry) => {
 		const url = `https://discord.com/channels/${guildId}/${entry.threadId}`;
-		const prefix = entry.isHome ? ':house: **' : ':minibus: ';
+		const prefix = entry.isHome ? ':house: **' : ':blue_car: ';
 		const suffix = entry.isHome ? '**' : '';
 		return `${prefix}[${entry.title}](${url})${suffix}`;
 	};
