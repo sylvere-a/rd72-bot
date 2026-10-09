@@ -1,13 +1,13 @@
 /** Default forum post title for the bot-owned index thread. */
 export const DEFAULT_INDEX_THREAD_TITLE = 'Liste des évènements';
-/** Default forum post icon (Unicode), not in the title — see forumThreadEmoji.ts */
+/** Default forum post icon (reaction on starter message) — see forumThreadEmoji.ts */
 export const DEFAULT_INDEX_THREAD_EMOJI = '📅';
 
 export type ForumConfig = {
 	channelId: string;
 	indexThreadId: string | null;
 	indexThreadTitle: string;
-	/** Forum post icon: Unicode (📅), custom <:a:123>, snowflake, or :calendar: shortcode */
+	/** Post list icon via starter reaction: Unicode, <:name:id>, snowflake, or :calendar: */
 	indexThreadEmoji: string | null;
 	homeTagId: string | null;
 	debounceMs: number;

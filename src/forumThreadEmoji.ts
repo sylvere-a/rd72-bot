@@ -1,8 +1,25 @@
-/** Discord forum post icon (not part of the thread title). */
-export type ForumThreadEmojiPayload = {
-	emoji_id: string | null;
-	emoji_name: string | null;
-};
+import type { Emoji, ThreadChannel } from 'discord.js';
+
+/** Value suitable for `Message#react()` (Unicode or `<:name:id>`). */
+export function forumPostReactionEmoji(value: string): string {
+	const trimmed = value.trim();
+
+	const shortcode = trimmed.match(/^:([a-z0-9_+]+):$/i);
+	if (shortcode) {
+		const unicode = SHORTCODE_TO_UNICODE[shortcode[1].toLowerCase()];
+		if (unicode) return unicode;
+	}
+
+	if (/^<a?:\w+:\d+>$/.test(trimmed)) {
+		return trimmed;
+	}
+
+	if (/^\d{17,20}$/.test(trimmed)) {
+		return trimmed;
+	}
+
+	return trimmed;
+}
 
 const SHORTCODE_TO_UNICODE: Record<string, string> = {
 	calendar: '📅',
@@ -10,31 +27,46 @@ const SHORTCODE_TO_UNICODE: Record<string, string> = {
 	earth_africa: '🌍',
 };
 
+function reactionMatchesTarget(reactionEmoji: Emoji, target: string): boolean {
+	if (reactionEmoji.id) {
+		return target.includes(reactionEmoji.id);
+	}
+	return reactionEmoji.name === target;
+}
+
 /**
- * Parse INDEX_THREAD_EMOJI for POST/PATCH forum thread:
- * - Unicode: 📅
- * - Custom: <:name:123> or snowflake id
- * - Shortcodes: :calendar: → 📅 (convenience only)
+ * Forum list icons come from reactions on the starter message (same as the client post picker).
  */
-export function parseForumThreadEmoji(value: string): ForumThreadEmojiPayload {
-	const trimmed = value.trim();
+export async function syncForumPostReaction(
+	thread: ThreadChannel,
+	botId: string,
+	emojiValue: string | null,
+): Promise<void> {
+	if (!emojiValue) return;
 
-	const shortcode = trimmed.match(/^:([a-z0-9_+]+):$/i);
-	if (shortcode) {
-		const unicode = SHORTCODE_TO_UNICODE[shortcode[1].toLowerCase()];
-		if (unicode) {
-			return { emoji_id: null, emoji_name: unicode };
-		}
+	const target = forumPostReactionEmoji(emojiValue);
+	const starter = await thread.fetchStarterMessage().catch(() => null);
+	if (!starter) {
+		console.warn(
+			`Index thread ${thread.id}: no starter message; cannot set post icon reaction`,
+		);
+		return;
 	}
 
-	const custom = trimmed.match(/^<a?:\w+:(\d+)>$/);
-	if (custom) {
-		return { emoji_id: custom[1], emoji_name: null };
+	for (const reaction of starter.reactions.cache.values()) {
+		if (!reactionMatchesTarget(reaction.emoji, target)) continue;
+		const users = reaction.users.cache.has(botId)
+			? reaction.users.cache
+			: await reaction.users.fetch().catch(() => null);
+		if (users?.has(botId)) return;
 	}
 
-	if (/^\d{17,20}$/.test(trimmed)) {
-		return { emoji_id: trimmed, emoji_name: null };
+	try {
+		await starter.react(target);
+	} catch (err) {
+		console.warn(
+			`Could not add forum post icon reaction on ${thread.id}:`,
+			err instanceof Error ? err.message : err,
+		);
 	}
-
-	return { emoji_id: null, emoji_name: trimmed };
 }

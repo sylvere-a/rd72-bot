@@ -1,4 +1,3 @@
-import { Routes } from 'discord-api-types/v10';
 import {
 	ChannelType,
 	Client,
@@ -9,7 +8,7 @@ import {
 import type { ForumConfig } from './config';
 import { buildIndexBody, type IndexEntry } from './buildIndexBody';
 import { eventStillListed } from './eventInWindow';
-import { parseForumThreadEmoji } from './forumThreadEmoji';
+import { syncForumPostReaction } from './forumThreadEmoji';
 import { parseEventDateFromTitle } from './parseEventDate';
 
 export type ForumRuntime = {
@@ -41,52 +40,21 @@ async function findBotIndexThread(
 	return null;
 }
 
-async function syncForumThreadEmoji(
-	client: Client,
-	threadId: string,
-	emojiValue: string | null,
-): Promise<void> {
-	if (!emojiValue) return;
-	const { emoji_id, emoji_name } = parseForumThreadEmoji(emojiValue);
-	try {
-		await client.rest.patch(Routes.channel(threadId), {
-			body: { emoji_id, emoji_name },
-		});
-	} catch (err) {
-		if (err instanceof DiscordAPIError) {
-			console.warn(
-				`Could not set forum post emoji: [${err.code}] ${err.message}`,
-			);
-		}
-	}
-}
-
 async function createForumIndexThread(
-	client: Client,
 	forum: ForumChannel,
 	forumConfig: ForumConfig,
+	botId: string,
 ): Promise<ThreadChannel> {
-	const body: Record<string, unknown> = {
+	const created = await forum.threads.create({
 		name: forumConfig.indexThreadTitle,
 		message: { content: '_Initialisation de l’index…_' },
-	};
-	if (forumConfig.indexThreadEmoji) {
-		const { emoji_id, emoji_name } = parseForumThreadEmoji(
-			forumConfig.indexThreadEmoji,
-		);
-		body.emoji_id = emoji_id;
-		body.emoji_name = emoji_name;
-	}
-
-	const data = (await client.rest.post(Routes.threads(forum.id), {
-		body,
 		reason: 'RD72 bot events index',
-	})) as { id: string };
-
-	const created = await client.channels.fetch(data.id);
-	if (!created?.isThread()) {
-		throw new Error('Forum index thread create returned non-thread channel');
-	}
+	});
+	await syncForumPostReaction(
+		created,
+		botId,
+		forumConfig.indexThreadEmoji,
+	);
 	return created;
 }
 
@@ -104,9 +72,9 @@ async function resolveIndexThread(
 		const existing = await client.channels.fetch(forumConfig.indexThreadId);
 		if (existing?.isThread()) {
 			if (await starterIsFromBot(existing, botId)) {
-				await syncForumThreadEmoji(
-					client,
-					existing.id,
+				await syncForumPostReaction(
+					existing,
+					botId,
 					forumConfig.indexThreadEmoji,
 				);
 				return existing;
@@ -128,9 +96,9 @@ async function resolveIndexThread(
 		botId,
 	);
 	if (found) {
-		await syncForumThreadEmoji(
-			client,
-			found.id,
+		await syncForumPostReaction(
+			found,
+			botId,
 			forumConfig.indexThreadEmoji,
 		);
 		return found;
@@ -139,7 +107,11 @@ async function resolveIndexThread(
 	console.log(
 		`Creating forum index thread "${forumConfig.indexThreadTitle}" …`,
 	);
-	const created = await createForumIndexThread(client, forum, forumConfig);
+	const created = await createForumIndexThread(
+		forum,
+		forumConfig,
+		botId,
+	);
 
 	await created.pin('RD72 bot events index');
 	console.log(

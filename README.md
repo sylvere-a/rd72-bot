@@ -20,8 +20,8 @@ Developer Portal: enable the bot; **Guilds** intent is enough for thread events.
 ## Forum index
 
 1. Set `FORUM_CHANNEL_ID` (sandbox: `1258321779265376266`).
-2. Restart the bot — it **finds or creates** the index post (`INDEX_THREAD_TITLE`, default `Liste des évènements`), sets the **forum post icon** via `INDEX_THREAD_EMOJI` (default `📅` — Unicode or guild emoji id, not in the title), pins it, and maintains the starter message.
-3. Optional: `INDEX_THREAD_ID` for a specific bot-owned thread. `INDEX_THREAD_EMOJI=` disables the icon.
+2. Restart the bot — it **finds or creates** the index post (`INDEX_THREAD_TITLE`, default `Liste des évènements`), adds **`INDEX_THREAD_EMOJI`** (default `📅`) as a **reaction on the starter message** (same as Discord’s post icon; not in the title), pins it, and maintains the starter body. Bot needs **Add Reactions** in the forum.
+3. Optional: `INDEX_THREAD_ID` for a specific bot-owned thread. `INDEX_THREAD_EMOJI=` skips the reaction.
 4. Event threads: date is **before the first ` - `**. Multi-day titles use the **first day** for sorting (`15 & 16 mai`, `21-22 novembre`, `21/22`, `21, 22`, `31 octobre & 1 novembre`, optional leading emoji). Events more than **7 days** in the past are hidden (`PAST_EVENT_GRACE_DAYS`).
 5. Set `HOME_TAG_ID` to your forum tag snowflake: index lines start with `:house:` for tagged “home” events, `:earth_africa:` otherwise.
 
