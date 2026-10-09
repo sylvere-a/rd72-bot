@@ -1,6 +1,6 @@
 {
   "name": "rd72-bot",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Discord Bot for RD72",
   "main": "index.js",
   "scripts": {
@@ -12,19 +12,11 @@
   },
   "author": "01101101",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/OIIOIIOI/rd72-bot/issues"
+  "engines": {
+    "node": ">=18"
   },
-  "homepage": "https://github.com/OIIOIIOI/rd72-bot#readme",
   "dependencies": {
-    "@discordjs/builders": "^0.9.0",
-    "@discordjs/rest": "^0.1.0-canary.0",
-    "axios": "^0.19.2",
-    "dayjs": "^1.9.7",
-    "discord-api-types": "^0.25.2",
-    "discord.js": "^13.3.1",
-    "dotenv": "^8.2.0",
-    "moment": "^2.29.1",
-    "node-cron": "^2.0.3"
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.7"
   }
 }
