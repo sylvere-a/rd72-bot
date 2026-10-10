@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { ContainerBuilder, MessageFlags } from 'discord.js';
 import { buildIndexBody } from './buildIndexBody';
 
 dayjs.extend(utc);
@@ -10,8 +11,14 @@ dayjs.extend(timezone);
 
 const ref = dayjs.tz('2026-10-15', 'Europe/Paris');
 
+function textFromContainer(container: ContainerBuilder): string {
+	const json = container.toJSON();
+	const first = json.components?.[0];
+	return first && 'content' in first ? String(first.content) : '';
+}
+
 describe('buildIndexBody', () => {
-	it('groups events by month in embeds', () => {
+	it('builds Components V2 containers per month', () => {
 		const guildId = '945313674959134730';
 		const payload = buildIndexBody(
 			guildId,
@@ -38,14 +45,13 @@ describe('buildIndexBody', () => {
 			{ referenceDate: ref },
 		);
 
-		assert.match(payload.content, /Mis à jour le/);
-		assert.equal(payload.embeds.length, 2);
-		assert.match(payload.embeds[0].title ?? '', /Octobre 2026/i);
-		assert.match(payload.embeds[0].description ?? '', /LE MANS/);
-		assert.match(payload.embeds[0].description ?? '', /:house:/);
-		assert.equal(payload.embeds[0].footer?.text, '2 évènements');
-		assert.match(payload.embeds[1].title ?? '', /Novembre 2026/i);
-		assert.equal(payload.embeds[1].footer?.text, '1 évènement');
+		assert.equal(payload.flags, MessageFlags.IsComponentsV2);
+		assert.equal(payload.components.length, 3);
+		assert.match(textFromContainer(payload.components[0]), /Mis à jour le/);
+		assert.match(textFromContainer(payload.components[1]), /# Octobre 2026/);
+		assert.match(textFromContainer(payload.components[1]), /LE MANS/);
+		assert.match(textFromContainer(payload.components[1]), /\*2 évènements\*/);
+		assert.match(textFromContainer(payload.components[2]), /# Novembre 2026/);
 	});
 
 	it('puts events beyond the next 6 months in Plus tard', () => {
@@ -69,9 +75,8 @@ describe('buildIndexBody', () => {
 			{ referenceDate: ref },
 		);
 
-		assert.equal(payload.embeds.length, 2);
-		assert.match(payload.embeds[0].title ?? '', /Octobre 2026/i);
-		assert.equal(payload.embeds[1].title, 'Plus tard');
-		assert.match(payload.embeds[1].description ?? '', /PARIS/);
+		assert.equal(payload.components.length, 3);
+		assert.match(textFromContainer(payload.components[2]), /# Plus tard/);
+		assert.match(textFromContainer(payload.components[2]), /PARIS/);
 	});
 });

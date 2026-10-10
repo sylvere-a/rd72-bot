@@ -168,7 +168,7 @@ export async function refreshForumIndex(
 		return;
 	}
 
-	const { content, embeds } = buildIndexBody(guildId, entries);
+	const { flags, components } = buildIndexBody(guildId, entries);
 	const starter = await indexThread.fetchStarterMessage();
 	if (!starter) {
 		console.error('Index thread has no starter message');
@@ -182,8 +182,10 @@ export async function refreshForumIndex(
 
 	try {
 		await starter.edit({
-			content,
-			embeds,
+			content: '',
+			embeds: [],
+			flags,
+			components,
 			...(keepAttachments.length > 0 ? { attachments: keepAttachments } : {}),
 		});
 		console.log(`Forum index updated (${entries.length} events)`);
