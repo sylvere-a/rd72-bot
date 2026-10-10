@@ -44,7 +44,7 @@ function lineFor(guildId: string, entry: IndexEntry): string {
 	const link = entry.isHome
 		? `:house: [**${entry.title}**](${url})`
 		: `:blue_car: [${entry.title}](${url})`;
-	return `> ${link}${tags}`;
+	return `${link}${tags}`;
 }
 
 function monthGroupKey(date: dayjs.Dayjs): string {
