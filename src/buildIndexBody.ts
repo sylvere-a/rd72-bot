@@ -67,7 +67,7 @@ function sectionText(
 	entries: IndexEntry[],
 ): string {
 	const lines = entries.map((e) => lineFor(guildId, e)).join('\n\n');
-	return `# ${title}\n\n${lines}\n\n*${eventCountLabel(entries.length)}*`;
+	return `**${title}**\n\n${lines}\n\n*${eventCountLabel(entries.length)}*`;
 }
 
 function partitionEntries(
