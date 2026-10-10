@@ -15,6 +15,10 @@ import {
 	indexCoverAttachment,
 	indexCoverContainer,
 } from './indexCoverImage';
+import {
+	formatAppliedTagEmojis,
+	forumTagById,
+} from './forumTagEmoji';
 import { parseEventDateFromTitle } from './parseEventDate';
 
 export type ForumRuntime = {
@@ -136,6 +140,7 @@ export async function refreshForumIndex(
 	runtime.indexThreadId = indexThread.id;
 
 	const threads = await fetchAllActiveThreads(forum);
+	const tagById = forumTagById(forum.availableTags);
 	const entries: IndexEntry[] = [];
 	let skippedUnparsed = 0;
 	let skippedPast = 0;
@@ -163,6 +168,9 @@ export async function refreshForumIndex(
 			title: thread.name,
 			eventDate,
 			isHome,
+			tagEmojis: formatAppliedTagEmojis(thread.appliedTags, tagById, {
+				excludeTagId: forumConfig.homeTagId,
+			}),
 		});
 	}
 

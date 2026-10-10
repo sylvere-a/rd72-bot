@@ -23,7 +23,7 @@ Developer Portal: enable the bot; **Guilds** intent is enough for thread events.
 2. Restart the bot — it **finds or creates** the index post (`INDEX_THREAD_TITLE`, default `Liste des évènements`), pins it, and maintains the starter message. On **create**, the starter includes `assets/evenements-liste-complete.png` (forum cover image); later refreshes only edit the text and keep the attachment. Deploy must ship the `assets/` folder. The forum **post icon** (emoji in the list) is still UI-only at create time — use a manual post + `INDEX_THREAD_ID` if you need a custom icon.
 3. Optional: `INDEX_THREAD_ID` pins a specific bot-owned index thread.
 4. Event threads: date is **before the first ` - `**. Multi-day titles use the **first day** for sorting (`15 & 16 mai`, `21-22 novembre`, `21/22`, `21, 22`, `31 octobre & 1 novembre`, optional leading emoji). Events more than **7 days** in the past are hidden (`PAST_EVENT_GRACE_DAYS`).
-5. Set `HOME_TAG_ID` to your forum tag snowflake: index lines start with `:house:` for tagged “home” events, `:earth_africa:` otherwise.
+5. Set `HOME_TAG_ID` to your forum tag snowflake: index lines start with `:house:` for tagged “home” events, `:blue_car:` otherwise. Tag **emojis** from the forum (Unicode or custom) are appended after each event link when tags are set on the post.
 
 ## Deploy on VPS (PM2 + Git push)
 

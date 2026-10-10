@@ -24,6 +24,8 @@ export type IndexEntry = {
 	title: string;
 	eventDate: dayjs.Dayjs;
 	isHome: boolean;
+	/** Space-prefixed tag emoji suffix after the link, e.g. ` 🎉 <:custom:123>`. */
+	tagEmojis?: string;
 };
 
 export type IndexMessagePayload = {
@@ -38,10 +40,11 @@ export type BuildIndexBodyOptions = {
 
 function lineFor(guildId: string, entry: IndexEntry): string {
 	const url = `https://discord.com/channels/${guildId}/${entry.threadId}`;
-	if (entry.isHome) {
-		return `:house: [**${entry.title}**](${url})`;
-	}
-	return `:blue_car: [${entry.title}](${url})`;
+	const tags = entry.tagEmojis ?? '';
+	const link = entry.isHome
+		? `:house: [**${entry.title}**](${url})`
+		: `:blue_car: [${entry.title}](${url})`;
+	return `> ${link}${tags}`;
 }
 
 function monthGroupKey(date: dayjs.Dayjs): string {
@@ -67,7 +70,7 @@ function sectionText(
 	entries: IndexEntry[],
 ): string {
 	const lines = entries.map((e) => lineFor(guildId, e)).join('\n\n');
-	return `**${title}**\n\n${lines}\n\n*${eventCountLabel(entries.length)}*`;
+	return `# ${title}\n\n${lines}\n\n*${eventCountLabel(entries.length)}*`;
 }
 
 function partitionEntries(

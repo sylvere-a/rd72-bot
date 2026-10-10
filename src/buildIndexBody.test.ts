@@ -28,6 +28,7 @@ describe('buildIndexBody', () => {
 					title: '24 octobre 2026 - LE MANS',
 					eventDate: dayjs.tz('2026-10-24', 'Europe/Paris'),
 					isHome: true,
+					tagEmojis: ' 🎉',
 				},
 				{
 					threadId: '2',
@@ -50,6 +51,7 @@ describe('buildIndexBody', () => {
 		assert.match(textFromContainer(payload.components[0]), /Mis à jour le/);
 		assert.match(textFromContainer(payload.components[1]), /# Octobre 2026/);
 		assert.match(textFromContainer(payload.components[1]), /LE MANS/);
+		assert.match(textFromContainer(payload.components[1]), /🎉/);
 		assert.match(textFromContainer(payload.components[1]), /\*2 évènements\*/);
 		assert.match(textFromContainer(payload.components[2]), /# Novembre 2026/);
 	});
