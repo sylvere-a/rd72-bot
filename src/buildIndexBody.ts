@@ -39,9 +39,9 @@ export type BuildIndexBodyOptions = {
 function lineFor(guildId: string, entry: IndexEntry): string {
 	const url = `https://discord.com/channels/${guildId}/${entry.threadId}`;
 	if (entry.isHome) {
-		return `> :house: [**${entry.title}**](${url})`;
+		return `:house: [**${entry.title}**](${url})`;
 	}
-	return `> :blue_car: [${entry.title}](${url})`;
+	return `:blue_car: [${entry.title}](${url})`;
 }
 
 function monthGroupKey(date: dayjs.Dayjs): string {
