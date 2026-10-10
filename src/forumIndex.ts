@@ -8,6 +8,7 @@ import {
 import type { ForumConfig } from './config';
 import { buildIndexBody, type IndexEntry } from './buildIndexBody';
 import { eventStillListed } from './eventInWindow';
+import { indexCoverAttachment } from './indexCoverImage';
 import { parseEventDateFromTitle } from './parseEventDate';
 
 export type ForumRuntime = {
@@ -43,9 +44,12 @@ async function createForumIndexThread(
 	forum: ForumChannel,
 	forumConfig: ForumConfig,
 ): Promise<ThreadChannel> {
+	const cover = indexCoverAttachment();
 	return forum.threads.create({
 		name: forumConfig.indexThreadTitle,
-		message: { content: '_Initialisation de l’index…_' },
+		message: cover
+			? { content: '_Liste des évènements._', files: [cover] }
+			: { content: '_Initialisation de l’index…_' },
 		reason: 'RD72 bot events index',
 	});
 }
