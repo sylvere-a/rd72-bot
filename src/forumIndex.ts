@@ -1,14 +1,20 @@
 import {
 	ChannelType,
 	Client,
+	ContainerBuilder,
 	DiscordAPIError,
+	MessageFlags,
+	TextDisplayBuilder,
 	type ForumChannel,
 	type ThreadChannel,
 } from 'discord.js';
 import type { ForumConfig } from './config';
 import { buildIndexBody, type IndexEntry } from './buildIndexBody';
 import { eventStillListed } from './eventInWindow';
-import { indexCoverAttachment } from './indexCoverImage';
+import {
+	indexCoverAttachment,
+	indexCoverContainer,
+} from './indexCoverImage';
 import { parseEventDateFromTitle } from './parseEventDate';
 
 export type ForumRuntime = {
@@ -44,11 +50,24 @@ async function createForumIndexThread(
 	forum: ForumChannel,
 	forumConfig: ForumConfig,
 ): Promise<ThreadChannel> {
-	const cover = indexCoverAttachment();
+	const coverFile = indexCoverAttachment();
+	const coverComponent = indexCoverContainer();
 	return forum.threads.create({
 		name: forumConfig.indexThreadTitle,
-		message: cover
-			? { content: '_Liste des évènements._', files: [cover] }
+		message: coverFile && coverComponent
+			? {
+					content: '',
+					flags: MessageFlags.IsComponentsV2,
+					components: [
+						coverComponent,
+						new ContainerBuilder().addTextDisplayComponents(
+							new TextDisplayBuilder().setContent(
+								'_Initialisation de l’index…_',
+							),
+						),
+					],
+					files: [coverFile],
+				}
 			: { content: '_Initialisation de l’index…_' },
 		reason: 'RD72 bot events index',
 	});
@@ -169,24 +188,25 @@ export async function refreshForumIndex(
 	}
 
 	const { flags, components } = buildIndexBody(guildId, entries);
+	const coverFile = indexCoverAttachment();
+	const coverComponent = indexCoverContainer();
+	const messageComponents = coverComponent
+		? [coverComponent, ...components]
+		: components;
+
 	const starter = await indexThread.fetchStarterMessage();
 	if (!starter) {
 		console.error('Index thread has no starter message');
 		return;
 	}
 
-	const keepAttachments = [...starter.attachments.values()].map((attachment) => ({
-		id: attachment.id,
-		filename: attachment.name ?? undefined,
-	}));
-
 	try {
 		await starter.edit({
 			content: '',
 			embeds: [],
 			flags,
-			components,
-			...(keepAttachments.length > 0 ? { attachments: keepAttachments } : {}),
+			components: messageComponents,
+			...(coverFile ? { files: [coverFile] } : {}),
 		});
 		console.log(`Forum index updated (${entries.length} events)`);
 	} catch (err) {
